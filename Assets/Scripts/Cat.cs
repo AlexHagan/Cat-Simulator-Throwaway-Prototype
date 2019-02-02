@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 // Constants
 
@@ -37,7 +38,7 @@ public class Cat : MonoBehaviour
 		public double hunger_gain_rate;
 		
 		// Constructor
-		public CatPersonality(double _edr = 50, double _hdr = 1, double _egr = 50, double _hgr = 1) {
+		public CatPersonality(double _edr = 5, double _hdr = 1, double _egr = 10, double _hgr = 1) {
 			
 			energy_decay_rate = _edr;
 			hunger_decay_rate = _hdr;
@@ -59,6 +60,9 @@ public class Cat : MonoBehaviour
 	CatPersonality cat_personality = new CatPersonality();
 	
 	NavMeshAgent agent;
+	public Slider hunger_slider;
+	public Slider sleep_slider;	
+
 	float change_state_delay = 5F; // A time delay (in seconds) before the cat will randomly choose a new state
 	float delta_time = 0F;
 	float time_of_last_state_change = 0F; // Time at which the cat's state last changed
@@ -68,7 +72,9 @@ public class Cat : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-		
+		hunger_slider = GameObject.Find("HungerSlider").GetComponent <Slider> ();
+		sleep_slider = GameObject.Find("SleepSlider").GetComponent <Slider> ();
+
         current_state = CatStates.Wandering;		
 		agent = GetComponent<NavMeshAgent>();
 		time_of_last_state_change = Time.time;
@@ -84,6 +90,10 @@ public class Cat : MonoBehaviour
     {
 		delta_time = Time.time - time_of_last_update;
 		time_of_last_update = Time.time;
+		
+		hunger_slider.value = (float) cat_stats.hunger;
+		sleep_slider.value = 100F - (float) cat_stats.energy;
+		Debug.Log("cat_stats.energy = " + cat_stats.energy);
 		
 		//Debug.Log("delta_time = " + delta_time);
 		
@@ -103,7 +113,6 @@ public class Cat : MonoBehaviour
 		if (current_state == CatStates.Wandering) {
 			Vector3 random_position = new Vector3(Random.value * floor_size_modifier, Random.value * floor_size_modifier, Random.value * floor_size_modifier); // Random.value eturns a random number between 0.0 [inclusive] and 1.0 [inclusive].
 			Debug.Log("Cat State: Wandering");
-			Debug.Log("Cat's Target Position: " + GetComponent<Transform>().position);
 			agent.destination = random_position;
 			
 			current_state = CatStates.Idle;
@@ -120,10 +129,7 @@ public class Cat : MonoBehaviour
 		// SLEEPING STATE
 		if (current_state == CatStates.Sleeping) {
 			cat_stats.energy += cat_personality.energy_gain_rate * delta_time;
-			//Debug.Log("cat_personality.energy_gain_rate * delta_time = " + (cat_personality.energy_gain_rate * delta_time));
-			Debug.Log("cat_stats.energy = " + cat_stats.energy);
-			//Debug.Log("cat_personality.energy_gain_rate = " + (cat_personality.energy_gain_rate));
-			
+
 			if (cat_stats.energy >= awake_threshold) {
 				current_state = CatStates.Idle;
 				time_of_last_state_change = Time.time;
