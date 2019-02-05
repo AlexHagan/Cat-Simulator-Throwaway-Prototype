@@ -24,7 +24,7 @@ public class Cat : MonoBehaviour
 		public double hunger;
 		
 		// Constructor
-		public CatStats(double _energy = full_energy, double _hunger = 100)
+		public CatStats(double _energy = full_energy, double _hunger = full_hunger)
 		{
 			energy = _energy;
 			hunger = _hunger;
@@ -97,11 +97,9 @@ public class Cat : MonoBehaviour
 		delta_time = Time.time - time_of_last_update;
 		time_of_last_update = Time.time;
 		
+		// Update Sliders
 		hunger_slider.value = (float) cat_stats.hunger;
-		sleep_slider.value = 100F - (float) cat_stats.energy;
-		//Debug.Log("cat_stats.energy = " + cat_stats.energy);
-		
-		//Debug.Log("delta_time = " + delta_time);
+		sleep_slider.value = (float) cat_stats.energy;
 		
 		// IDLE STATE
         if (current_state == CatStates.Idle) {
