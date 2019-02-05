@@ -1287,7 +1287,7 @@ GameObject:
   - component: {fileID: 1174897656}
   - component: {fileID: 1174897655}
   m_Layer: 5
-  m_Name: Fill
+  m_Name: Sleep Slider Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1461,7 +1461,7 @@ GameObject:
   - component: {fileID: 1480351798}
   - component: {fileID: 1480351797}
   m_Layer: 5
-  m_Name: Fill
+  m_Name: Hunger Slider Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
