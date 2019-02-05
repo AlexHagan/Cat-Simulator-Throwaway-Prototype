@@ -42,7 +42,7 @@ public class Cat : MonoBehaviour
 		public double hunger_gain_rate;
 		
 		// Constructor
-		public CatPersonality(double _edr = 1, double _hdr = 10, double _egr = 25, double _hgr = 50) {
+		public CatPersonality(double _edr = 2, double _hdr = 5, double _egr = 10, double _hgr = 30) {
 			
 			energy_decay_rate = _edr;
 			hunger_decay_rate = _hdr;
@@ -65,7 +65,11 @@ public class Cat : MonoBehaviour
 	
 	NavMeshAgent agent;
 	public Slider hunger_slider;
-	public Slider sleep_slider;	
+	public Slider sleep_slider;
+	SpriteRenderer heart_icon;
+	SpriteRenderer hungry_icon;
+	SpriteRenderer sleep_icon;
+
 	float change_state_delay = 3F; // A time delay (in seconds) before the cat will randomly choose a new state
 	float delta_time = 0F;
 	float time_of_last_state_change = 0F; // Time at which the cat's state last changed
@@ -80,6 +84,17 @@ public class Cat : MonoBehaviour
     {
 		hunger_slider = GameObject.Find("HungerSlider").GetComponent <Slider> ();
 		sleep_slider = GameObject.Find("SleepSlider").GetComponent <Slider> ();
+
+		heart_icon = GameObject.Find("catsim_heart_icon").GetComponent <SpriteRenderer> ();
+		hungry_icon = GameObject.Find("catsim_hungry_icon").GetComponent <SpriteRenderer> ();
+		sleep_icon = GameObject.Find("catsim_sleep_icon").GetComponent <SpriteRenderer> ();
+
+		heart_icon.GetComponent<Renderer>().enabled = false;
+		hungry_icon.GetComponent<Renderer>().enabled = false;
+		sleep_icon.GetComponent<Renderer>().enabled = false;
+		
+		//hungry_icon.renderer.enabled = false;
+		//sleep_icon.renderer.enabled = false;
 
         current_state = CatStates.Wandering;		
 		agent = GetComponent<NavMeshAgent>();
@@ -97,7 +112,7 @@ public class Cat : MonoBehaviour
 		delta_time = Time.time - time_of_last_update;
 		time_of_last_update = Time.time;
 		
-		hunger_slider.value = (float) cat_stats.hunger;
+		hunger_slider.value = 100F - (float) cat_stats.hunger;
 		sleep_slider.value = 100F - (float) cat_stats.energy;
 		//Debug.Log("cat_stats.energy = " + cat_stats.energy);
 		
@@ -106,7 +121,6 @@ public class Cat : MonoBehaviour
 		// IDLE STATE
         if (current_state == CatStates.Idle) {
 			// Cat does nothing; waits for player input or new state change
-			Debug.Log("Cat State: Idle");
 
 			if (Time.time - time_of_last_state_change > change_state_delay) {
 				current_state = CatStates.Wandering;
@@ -123,6 +137,7 @@ public class Cat : MonoBehaviour
 			
 			current_state = CatStates.Idle;
 			time_of_last_state_change = Time.time;
+			Debug.Log("Cat State: Idle");
 		}
 		
 		// EATING STATE
@@ -131,6 +146,7 @@ public class Cat : MonoBehaviour
 			
 			// If cat is not hungry, it will stop eating
 			if (cat_stats.hunger >= full_hunger) {
+				hungry_icon.GetComponent<Renderer>().enabled = false;
 				current_state = CatStates.Idle;
 				time_of_last_state_change = Time.time;
 				
@@ -143,7 +159,8 @@ public class Cat : MonoBehaviour
 			cat_stats.hunger -= cat_personality.hunger_decay_rate * delta_time;
 			
 			// If cat is hungry, it will eat
-			if (cat_stats.hunger <= hunger_threshold) {
+			if (current_state != CatStates.Sleeping && cat_stats.hunger <= hunger_threshold) {
+				hungry_icon.GetComponent<Renderer>().enabled = true;
 				current_state = CatStates.Eating;
 				time_of_last_state_change = Time.time;
 				
@@ -161,6 +178,7 @@ public class Cat : MonoBehaviour
 			
 			// If cat is rested, it will wake up
 			if (cat_stats.energy >= full_energy) {
+				sleep_icon.GetComponent<Renderer>().enabled = false;
 				current_state = CatStates.Idle;
 				time_of_last_state_change = Time.time;
 				
@@ -173,6 +191,7 @@ public class Cat : MonoBehaviour
 			
 			// If cat is tired, it will go to sleep
 			if (cat_stats.energy <= sleep_threshold) {
+				sleep_icon.GetComponent<Renderer>().enabled = true;
 				current_state = CatStates.Sleeping;
 				time_of_last_state_change = Time.time;
 				
