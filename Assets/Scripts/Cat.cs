@@ -41,8 +41,11 @@ public class Cat : MonoBehaviour
 		public double energy_gain_rate;
 		public double hunger_gain_rate;
 		
+		// Time happy for each second petted
+		public double joyfullness;
+		
 		// Constructor
-		public CatPersonality(double _edr = 2, double _hdr = 5, double _egr = 10, double _hgr = 30) {
+		public CatPersonality(double _edr = 2, double _hdr = 5, double _egr = 10, double _hgr = 30, double jf = 1.5) {
 			
 			energy_decay_rate = _edr;
 			hunger_decay_rate = _hdr;
@@ -50,6 +53,7 @@ public class Cat : MonoBehaviour
 			energy_gain_rate = _egr;
 			hunger_gain_rate = _hgr;
 			
+			joyfullness = jf;
 		}
 	}
 	
@@ -57,7 +61,8 @@ public class Cat : MonoBehaviour
 	enum CatStates {Idle, 
 					Wandering, 
 					Eating, 
-					Sleeping};
+					Sleeping,
+					Happy};
 	
 	CatStates current_state;
 	CatStats cat_stats = new CatStats();
@@ -75,6 +80,7 @@ public class Cat : MonoBehaviour
 	float time_of_last_state_change = 0F; // Time at which the cat's state last changed
 	float time_of_last_update = 0F; // Time at which Update() was last called
 	float floor_size_modifier = 2.5F; // The floor is 5 by 5 units wide, so the random position can be anywhere between (-2.5, -2.5, 0) and (2.5, 2.5, 0)
+	float happy_time = 0F;
 	
 	bool is_drag;
 	double drag_start_time;
@@ -138,6 +144,14 @@ public class Cat : MonoBehaviour
 			current_state = CatStates.Idle;
 			time_of_last_state_change = Time.time;
 			Debug.Log("Cat State: Idle");
+		}
+		
+		// Happy state (after petting)
+		if (current_state == CatStates.Happy) {
+			if (Time.time - time_of_last_state_change > happy_time) {
+				current_state = CatStates.Idle;
+				heart_icon.GetComponent<Renderer>().enabled = false;
+			}
 		}
 		
 		// EATING STATE
@@ -215,10 +229,22 @@ public class Cat : MonoBehaviour
 		Debug.Log("Dragged for " + drag_time);
 		
 		// A short drag is registered as a click, causing cat to approach user
-		if (drag_time < 0.5) {
+		if (drag_time < 0.1) {
 			Vector3 new_position = new Vector3(0, 0, 0);
 			agent.destination = new_position;
-			Debug.Log("Cat clicked on");	
+			Debug.Log("Cat clicked on");
+		
+		// For longer drags, count as petting
+		} else if (current_state != CatStates.Sleeping && current_state != CatStates.Eating) {
+			if (current_state != CatStates.Happy) {
+				current_state = CatStates.Happy;
+				Debug.Log("Cat State: Happy");
+				happy_time = 0F;
+				time_of_last_state_change = Time.time;
+				heart_icon.GetComponent<Renderer>().enabled = true;
+			}
+			happy_time += (float) (drag_time * cat_personality.joyfullness);
+			
 		}
 	}
 }
