@@ -24,7 +24,7 @@ public class Cat : MonoBehaviour
 		public double hunger;
 		
 		// Constructor
-		public CatStats(double _energy = full_energy, double _hunger = 100)
+		public CatStats(double _energy = full_energy, double _hunger = full_hunger)
 		{
 			energy = _energy;
 			hunger = _hunger;
@@ -46,7 +46,6 @@ public class Cat : MonoBehaviour
 		
 		// Constructor
 		public CatPersonality(double _edr = 2, double _hdr = 5, double _egr = 10, double _hgr = 30, double jf = 1.5) {
-			
 			energy_decay_rate = _edr;
 			hunger_decay_rate = _hdr;
 			
@@ -67,13 +66,17 @@ public class Cat : MonoBehaviour
 	CatStates current_state;
 	CatStats cat_stats = new CatStats();
 	CatPersonality cat_personality = new CatPersonality();
-	
 	NavMeshAgent agent;
+	
 	public Slider hunger_slider;
 	public Slider sleep_slider;
 	SpriteRenderer heart_icon;
 	SpriteRenderer hungry_icon;
-	SpriteRenderer sleep_icon;
+	SpriteRenderer sleep_icon;	
+	Image hunger_slider_fill;
+	Image sleep_slider_fill;
+	Color high_stat_bar_color;
+	Color low_stat_bar_color;
 
 	float change_state_delay = 3F; // A time delay (in seconds) before the cat will randomly choose a new state
 	float delta_time = 0F;
@@ -90,6 +93,10 @@ public class Cat : MonoBehaviour
     {
 		hunger_slider = GameObject.Find("HungerSlider").GetComponent <Slider> ();
 		sleep_slider = GameObject.Find("SleepSlider").GetComponent <Slider> ();
+		hunger_slider_fill = GameObject.Find("Hunger Slider Fill").GetComponent <Image> ();
+		sleep_slider_fill = GameObject.Find("Sleep Slider Fill").GetComponent <Image> ();
+		high_stat_bar_color = new Color32(10, 200, 55, 255);
+		low_stat_bar_color = new Color32(226, 214, 29, 255);
 
 		heart_icon = GameObject.Find("catsim_heart_icon").GetComponent <SpriteRenderer> ();
 		hungry_icon = GameObject.Find("catsim_hungry_icon").GetComponent <SpriteRenderer> ();
@@ -105,10 +112,6 @@ public class Cat : MonoBehaviour
         current_state = CatStates.Wandering;		
 		agent = GetComponent<NavMeshAgent>();
 		time_of_last_state_change = Time.time;
-		
-		
-		
-		//Debug.Log("Cat's Starting Position: " + GetComponent<Transform>().position);
 	
     }
 
@@ -117,12 +120,10 @@ public class Cat : MonoBehaviour
     {
 		delta_time = Time.time - time_of_last_update;
 		time_of_last_update = Time.time;
-		
-		hunger_slider.value = 100F - (float) cat_stats.hunger;
-		sleep_slider.value = 100F - (float) cat_stats.energy;
-		//Debug.Log("cat_stats.energy = " + cat_stats.energy);
-		
-		//Debug.Log("delta_time = " + delta_time);
+
+		// Update Sliders
+		hunger_slider.value = (float) cat_stats.hunger;
+		sleep_slider.value = (float) cat_stats.energy;
 		
 		// IDLE STATE
         if (current_state == CatStates.Idle) {
@@ -158,6 +159,11 @@ public class Cat : MonoBehaviour
 		if (current_state == CatStates.Eating) {
 			cat_stats.hunger += cat_personality.hunger_gain_rate * delta_time;
 			
+			// If hunger stat is getting high, change stat bar color
+			if (cat_stats.hunger >= (full_hunger * 0.5)) {
+				hunger_slider_fill.color = high_stat_bar_color;
+			}
+			
 			// If cat is not hungry, it will stop eating
 			if (cat_stats.hunger >= full_hunger) {
 				hungry_icon.GetComponent<Renderer>().enabled = false;
@@ -171,6 +177,11 @@ public class Cat : MonoBehaviour
 		// IF NOT EATING
 		else {
 			cat_stats.hunger -= cat_personality.hunger_decay_rate * delta_time;
+			
+			// If hunger stat is getting low, change stat bar color
+			if (cat_stats.hunger <= (full_hunger * 0.5)) {
+				hunger_slider_fill.color = low_stat_bar_color;
+			}
 			
 			// If cat is hungry, it will eat
 			if (current_state != CatStates.Sleeping && cat_stats.hunger <= hunger_threshold) {
@@ -186,9 +197,11 @@ public class Cat : MonoBehaviour
 		// SLEEPING STATE
 		if (current_state == CatStates.Sleeping) {
 			cat_stats.energy += cat_personality.energy_gain_rate * delta_time;
-			//Debug.Log("cat_personality.energy_gain_rate * delta_time = " + (cat_personality.energy_gain_rate * delta_time));
-			//Debug.Log("cat_stats.energy = " + cat_stats.energy);
-			//Debug.Log("cat_personality.energy_gain_rate = " + (cat_personality.energy_gain_rate));
+			
+			// If sleep stat is getting full, change stat bar color
+			if (cat_stats.energy >= (full_energy * 0.5) ) {
+				sleep_slider_fill.color = high_stat_bar_color;
+			}
 			
 			// If cat is rested, it will wake up
 			if (cat_stats.energy >= full_energy) {
@@ -202,6 +215,11 @@ public class Cat : MonoBehaviour
 		// IF NOT SLEEPING
 		else {
 			cat_stats.energy -= cat_personality.energy_decay_rate * delta_time;
+			
+			// If sleep stat is getting low, change stat bar color
+			if (cat_stats.energy <= (full_energy * 0.5)) {
+				sleep_slider_fill.color = low_stat_bar_color;
+			}
 			
 			// If cat is tired, it will go to sleep
 			if (cat_stats.energy <= sleep_threshold) {
