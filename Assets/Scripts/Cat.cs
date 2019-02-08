@@ -61,12 +61,14 @@ public class Cat : MonoBehaviour
 					Wandering, 
 					Eating, 
 					Sleeping,
-					Happy};
+					Happy,
+					User_Interaction};
 	
 	CatStates current_state;
 	CatStats cat_stats = new CatStats();
 	CatPersonality cat_personality = new CatPersonality();
 	NavMeshAgent agent;
+	Transform cat_transform;
 	
 	public Slider hunger_slider;
 	public Slider sleep_slider;
@@ -87,6 +89,10 @@ public class Cat : MonoBehaviour
 	
 	bool is_drag;
 	double drag_start_time;
+	Vector3 in_front_of_user_position;
+	
+	Vector3 default_camera_focus_position;
+	Vector3 default_camera_rotation;
 	
     // Start is called before the first frame update
     void Start()
@@ -111,7 +117,13 @@ public class Cat : MonoBehaviour
 
         current_state = CatStates.Wandering;		
 		agent = GetComponent<NavMeshAgent>();
+		cat_transform = GetComponent<Transform>();
 		time_of_last_state_change = Time.time;
+		
+		in_front_of_user_position = new Vector3(0F, 0.5F, -3F);
+		default_camera_focus_position = new Vector3(0F, 0F, 0F);
+		default_camera_rotation = new Vector3(7F, 0, 0);
+		
 	
     }
 
@@ -128,6 +140,7 @@ public class Cat : MonoBehaviour
 		// IDLE STATE
         if (current_state == CatStates.Idle) {
 			// Cat does nothing; waits for player input or new state change
+			
 
 			if (Time.time - time_of_last_state_change > change_state_delay) {
 				current_state = CatStates.Wandering;
@@ -147,12 +160,27 @@ public class Cat : MonoBehaviour
 			Debug.Log("Cat State: Idle");
 		}
 		
+		if (current_state == CatStates.User_Interaction) {
+			Camera.main.transform.LookAt(cat_transform); // main camera will follow cat
+		}
+		
 		// Happy state (after petting)
 		if (current_state == CatStates.Happy) {
+			Camera.main.transform.LookAt(cat_transform); // main camera will follow cat
+			
+			// Focus on user for 10 seconds before wandering off
+			if (Time.time - time_of_last_state_change >= 10F) {
+				current_state = CatStates.Wandering;
+				Debug.Log("Cat Loses Focus");
+				time_of_last_state_change = Time.time;
+				//Camera.main.GetComponent<Transform>().LookAt(default_camera_focus_position);
+				Camera.main.GetComponent<Transform>().localEulerAngles = default_camera_rotation;
+			}
+				
 			if (Time.time - time_of_last_state_change > happy_time) {
-				current_state = CatStates.Idle;
 				heart_icon.GetComponent<Renderer>().enabled = false;
 			}
+			
 		}
 		
 		// EATING STATE
@@ -174,8 +202,8 @@ public class Cat : MonoBehaviour
 			}
 			
 		}
-		// IF NOT EATING
-		else {
+		// IF NOT EATING (and not currently focusing on user)
+		else if (current_state != CatStates.Happy) {
 			cat_stats.hunger -= cat_personality.hunger_decay_rate * delta_time;
 			
 			// If hunger stat is getting low, change stat bar color
@@ -212,8 +240,8 @@ public class Cat : MonoBehaviour
 				Debug.Log("Cat State: Idle (Awake)");
 			}
 		}
-		// IF NOT SLEEPING
-		else {
+		// IF NOT SLEEPING and not focusing on user
+		else if (current_state != CatStates.Happy) {
 			cat_stats.energy -= cat_personality.energy_decay_rate * delta_time;
 			
 			// If sleep stat is getting low, change stat bar color
@@ -229,7 +257,9 @@ public class Cat : MonoBehaviour
 				
 				Debug.Log("Cat State: Sleeping");
 			}
-		}		
+		}
+
+		
     }
 	
 	void OnMouseDown(){
@@ -248,12 +278,15 @@ public class Cat : MonoBehaviour
 		
 		// A short drag is registered as a click, causing cat to approach user
 		if (drag_time < 0.1) {
-			Vector3 new_position = new Vector3(0, 0, 0);
-			agent.destination = new_position;
+			Camera.main.transform.LookAt(cat_transform); // main camera will follow cat
+			agent.destination = in_front_of_user_position; // cat approaches user
+			current_state = CatStates.User_Interaction;
+			time_of_last_state_change = Time.time;
+			
 			Debug.Log("Cat clicked on");
-		
+		} 
 		// For longer drags, count as petting
-		} else if (current_state != CatStates.Sleeping && current_state != CatStates.Eating) {
+		else if (current_state != CatStates.Sleeping && current_state != CatStates.Eating) {
 			if (current_state != CatStates.Happy) {
 				current_state = CatStates.Happy;
 				Debug.Log("Cat State: Happy");
