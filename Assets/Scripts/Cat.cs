@@ -89,6 +89,9 @@ public class Cat : MonoBehaviour
 	
 	bool is_drag;
 	double drag_start_time;
+	
+	public Texture2D pettingCursor; // Set in unity editor
+	
 	Vector3 in_front_of_user_position;
 	
 	Vector3 default_camera_focus_position;
@@ -268,12 +271,19 @@ public class Cat : MonoBehaviour
 			is_drag = true;
 			drag_start_time = Time.time;
 		}
+		
+		// If cat is in front of user...
+		if (Vector3.Distance(cat_transform.position, in_front_of_user_position) <= 3F ) { // Yay, magic numbers! *throws confetti*
+			Cursor.SetCursor(pettingCursor, Vector2.zero, CursorMode.ForceSoftware);
+		}
 	}
 	
 	void OnMouseUp(){
 		// When mouse released, act based on accumulated drag
 		is_drag = false;
 		double drag_time = Time.time - drag_start_time;
+		Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+		
 		Debug.Log("Dragged for " + drag_time);
 		
 		// A short drag is registered as a click, causing cat to approach user
