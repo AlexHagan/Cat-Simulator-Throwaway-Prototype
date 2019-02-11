@@ -61,6 +61,7 @@ public class Cat : MonoBehaviour
 					Wandering, 
 					Eating, 
 					Sleeping,
+					Playing,
 					Happy,
 					User_Interaction};
 	
@@ -69,6 +70,7 @@ public class Cat : MonoBehaviour
 	CatPersonality cat_personality = new CatPersonality();
 	NavMeshAgent agent;
 	Transform cat_transform;
+	GameObject cat_toy;
 	
 	public Slider hunger_slider;
 	public Slider sleep_slider;
@@ -86,6 +88,8 @@ public class Cat : MonoBehaviour
 	float time_of_last_update = 0F; // Time at which Update() was last called
 	float floor_size_modifier = 2.5F; // The floor is 5 by 5 units wide, so the random position can be anywhere between (-2.5, -2.5, 0) and (2.5, 2.5, 0)
 	float happy_time = 0F;
+	float chase_toy_time_delay = 4F; // Wait x seconds before updating cat's destination
+	float time_toy_last_chased = 0F; // Time the cat's position was last updated
 	
 	bool is_drag;
 	double drag_start_time;
@@ -121,6 +125,7 @@ public class Cat : MonoBehaviour
         current_state = CatStates.Wandering;		
 		agent = GetComponent<NavMeshAgent>();
 		cat_transform = GetComponent<Transform>();
+		cat_toy = GameObject.Find("Cat Toy");
 		time_of_last_state_change = Time.time;
 		
 		in_front_of_user_position = new Vector3(0F, 0.5F, -3F);
@@ -144,16 +149,27 @@ public class Cat : MonoBehaviour
         if (current_state == CatStates.Idle) {
 			// Cat does nothing; waits for player input or new state change
 			
-
+			
 			if (Time.time - time_of_last_state_change > change_state_delay) {
-				current_state = CatStates.Wandering;
+				
+				// Choose a new state 
+				if (Random.value >= 0.75) {
+					current_state = CatStates.Wandering;
+				}
+				else {
+					current_state = CatStates.Playing;
+				}
+				
 				time_of_last_state_change = Time.time;
+				
 			}
 			
 		}
 		
 		// WANDERING STATE
 		if (current_state == CatStates.Wandering) {
+			Debug.Log("Cat State: Wandering");
+			
 			Vector3 random_position = new Vector3(Random.value * floor_size_modifier, Random.value * floor_size_modifier, Random.value * floor_size_modifier); // Random.value eturns a random number between 0.0 [inclusive] and 1.0 [inclusive].
 			Debug.Log("Cat State: Wandering");
 			agent.destination = random_position;
@@ -163,8 +179,40 @@ public class Cat : MonoBehaviour
 			Debug.Log("Cat State: Idle");
 		}
 		
+		// PLAYING STATE
+		if (current_state == CatStates.Playing) {
+			Debug.Log("Cat State: Playing");
+			agent.speed = 7F;
+			
+			if (Time.time - time_toy_last_chased >= chase_toy_time_delay) {
+				time_toy_last_chased = Time.time;
+				
+				Vector3 go_here = cat_toy.GetComponent<Transform>().position;
+				agent.destination = go_here;
+				
+			}
+			
+			// Focus on toy for 10 seconds before wandering off
+			if (Time.time - time_of_last_state_change >= 10F) {
+				current_state = CatStates.Wandering;
+				agent.speed = 3.5F;
+				Debug.Log("Cat State: Wandering");
+				time_of_last_state_change = Time.time;
+			}
+			
+		}
+		
 		if (current_state == CatStates.User_Interaction) {
 			Camera.main.transform.LookAt(cat_transform); // main camera will follow cat
+			
+			// Focus on user for 10 seconds before wandering off
+			if (Time.time - time_of_last_state_change >= 10F) {
+				current_state = CatStates.Wandering;
+				Debug.Log("Cat Loses Focus");
+				time_of_last_state_change = Time.time;
+				//Camera.main.GetComponent<Transform>().LookAt(default_camera_focus_position);
+				Camera.main.GetComponent<Transform>().localEulerAngles = default_camera_rotation;
+			}
 		}
 		
 		// Happy state (after petting)
