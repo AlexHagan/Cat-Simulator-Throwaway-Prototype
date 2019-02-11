@@ -8,4 +8,10 @@ EditorBuildSettings:
   - enabled: 0
     path: 
     guid: 00000000000000000000000000000000
+  - enabled: 1
+    path: Assets/Scenes/CatSim_LivingRoom.unity
+    guid: c4242c0f1f7901348bb369113d4814c8
+  - enabled: 1
+    path: Assets/Scenes/CatSim_StartScreen.unity
+    guid: 8c7b7d9c450974a86b6d6f0de7e400f7
   m_configObjects: {}

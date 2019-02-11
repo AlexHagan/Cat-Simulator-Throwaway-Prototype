@@ -100,6 +100,7 @@ public class Cat : MonoBehaviour
 	
 	Vector3 default_camera_focus_position;
 	Vector3 default_camera_rotation;
+	Vector3 default_camera_position;
 	
     // Start is called before the first frame update
     void Start()
@@ -131,6 +132,7 @@ public class Cat : MonoBehaviour
 		in_front_of_user_position = new Vector3(0F, 0.5F, -3F);
 		default_camera_focus_position = new Vector3(0F, 0F, 0F);
 		default_camera_rotation = new Vector3(7F, 0, 0);
+		default_camera_position = new Vector3(0, 3.5F, -9F);
 		
 	
     }
@@ -219,8 +221,8 @@ public class Cat : MonoBehaviour
 		if (current_state == CatStates.Happy) {
 			Camera.main.transform.LookAt(cat_transform); // main camera will follow cat
 			
-			// Focus on user for 10 seconds before wandering off
-			if (Time.time - time_of_last_state_change >= 10F) {
+			// Focus on user for x seconds before wandering off
+			if (Time.time - time_of_last_state_change >= 7F) {
 				current_state = CatStates.Wandering;
 				Debug.Log("Cat Loses Focus");
 				time_of_last_state_change = Time.time;
