@@ -572,5 +572,6 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Take care of your cat by petting and feeding it! Pet your cat by double-clicking
-    on it to get it's attention, then hover over it with your cursor.
+  m_Text: Welcome to CatSim! Click on your cat and it will approach you. Drag your
+    mouse over your cat for petting. Your pet may be distacted by sleep, food, or
+    its toy.
