@@ -561,17 +561,18 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 14
+    m_FontSize: 12
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 0
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Welcome to CatSim! Click on your cat and it will approach you. Drag your
-    mouse over your cat for petting. Your pet may be distacted by sleep, food, or
-    its toy.
+  m_Text: Welcome to CatSim! Click on your cat to summon it. When your cat is close
+    to you, click + drag with the left mouse button to pet it. When the food bowl
+    is empty, click on it to refill it. If your cat is distracted, it may not respond
+    to your summons immediately.

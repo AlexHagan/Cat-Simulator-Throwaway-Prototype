@@ -71,6 +71,8 @@ public class Cat : MonoBehaviour
 	NavMeshAgent agent;
 	Transform cat_transform;
 	GameObject cat_toy;
+	GameObject food_bowl;
+	GameObject kibble;
 	
 	public Slider hunger_slider;
 	public Slider sleep_slider;
@@ -93,6 +95,8 @@ public class Cat : MonoBehaviour
 	
 	bool is_drag;
 	double drag_start_time;
+	
+	bool can_eat; // Is the cat physically close enough to its food bowl to eat?
 	
 	public Texture2D pettingCursor; // Set in unity editor
 	
@@ -120,13 +124,15 @@ public class Cat : MonoBehaviour
 		hungry_icon.GetComponent<Renderer>().enabled = false;
 		sleep_icon.GetComponent<Renderer>().enabled = false;
 		
-		//hungry_icon.renderer.enabled = false;
-		//sleep_icon.renderer.enabled = false;
+		can_eat = false;
 
         current_state = CatStates.Wandering;		
 		agent = GetComponent<NavMeshAgent>();
 		cat_transform = GetComponent<Transform>();
 		cat_toy = GameObject.Find("Cat Toy");
+		food_bowl = GameObject.Find("Food Bowl");
+		kibble = GameObject.Find("Cat Food");
+		
 		time_of_last_state_change = Time.time;
 		
 		in_front_of_user_position = new Vector3(0F, 0.5F, -3F);
@@ -160,6 +166,7 @@ public class Cat : MonoBehaviour
 				}
 				else {
 					current_state = CatStates.Playing;
+					Debug.Log("Cat State: Playing");
 				}
 				
 				time_of_last_state_change = Time.time;
@@ -183,7 +190,7 @@ public class Cat : MonoBehaviour
 		
 		// PLAYING STATE
 		if (current_state == CatStates.Playing) {
-			Debug.Log("Cat State: Playing");
+			
 			agent.speed = 7F;
 			
 			if (Time.time - time_toy_last_chased >= chase_toy_time_delay) {
@@ -238,20 +245,33 @@ public class Cat : MonoBehaviour
 		
 		// EATING STATE
 		if (current_state == CatStates.Eating) {
-			cat_stats.hunger += cat_personality.hunger_gain_rate * delta_time;
 			
-			// If hunger stat is getting high, change stat bar color
-			if (cat_stats.hunger >= (full_hunger * 0.5)) {
-				hunger_slider_fill.color = high_stat_bar_color;
+			// If there is no food in the bowl...
+			if (kibble.activeSelf == false) {
+				current_state = CatStates.Wandering;
+				time_of_last_state_change = Time.time;
+			}
+			
+			if ((can_eat == true) && (kibble.activeSelf == true)) {
+				cat_stats.hunger += cat_personality.hunger_gain_rate * delta_time;
+				
+				// If hunger stat is getting high, change stat bar color
+				if (cat_stats.hunger >= (full_hunger * 0.5)) {
+					hunger_slider_fill.color = high_stat_bar_color;
+				}
+				
 			}
 			
 			// If cat is not hungry, it will stop eating
 			if (cat_stats.hunger >= full_hunger) {
 				hungry_icon.GetComponent<Renderer>().enabled = false;
-				current_state = CatStates.Idle;
+				current_state = CatStates.Wandering;
 				time_of_last_state_change = Time.time;
 				
-				Debug.Log("Cat State: Idle");
+				// Deactivate cat food
+				kibble.SetActive(false);
+				
+				Debug.Log("Cat State: Wandering");
 			}
 			
 		}
@@ -264,13 +284,20 @@ public class Cat : MonoBehaviour
 				hunger_slider_fill.color = low_stat_bar_color;
 			}
 			
-			// If cat is hungry, it will eat
-			if (current_state != CatStates.Sleeping && cat_stats.hunger <= hunger_threshold) {
-				hungry_icon.GetComponent<Renderer>().enabled = true;
-				current_state = CatStates.Eating;
-				time_of_last_state_change = Time.time;
+			// If cat is hungry, it will try to eat
+			if ( (current_state != CatStates.Sleeping) && (cat_stats.hunger <= hunger_threshold) ) {
 				
-				Debug.Log("Cat State: Eating");
+				// If there is food in the bowl, the cat will eat
+				if (kibble.activeSelf == true) {
+					hungry_icon.GetComponent<Renderer>().enabled = true;
+					current_state = CatStates.Eating;
+					time_of_last_state_change = Time.time;
+					
+					agent.destination = food_bowl.GetComponent<Transform>().position;
+					
+					Debug.Log("Cat State: Eating");
+				}
+				
 			}
 			
 		}
@@ -328,7 +355,7 @@ public class Cat : MonoBehaviour
 		}
 	}
 	
-	void OnMouseUp(){
+	void OnMouseUp() {
 		// When mouse released, act based on accumulated drag
 		is_drag = false;
 		double drag_time = Time.time - drag_start_time;
@@ -357,5 +384,28 @@ public class Cat : MonoBehaviour
 			happy_time += (float) (drag_time * cat_personality.joyfullness);
 			
 		}
+	}
+	
+	void OnCollisionEnter(Collision collision) {
+		
+		//Debug.Log("Collision Entered.");
+		
+		if (collision.gameObject.name == "Food Bowl") {
+			can_eat = true;
+			agent.destination = GetComponent<Transform>().position; // haxx to prevent the cat from spinning circles around the food bowl...........
+			Debug.Log("can_eat = true;");
+		}
+		
+	}
+	
+	void OnCollisionExit(Collision collision) {
+		
+		//Debug.Log("Collision Exited.");
+		
+		if (collision.gameObject.name == "Food Bowl") {
+			can_eat = false;
+			Debug.Log("can_eat = false;");
+		}
+		
 	}
 }
